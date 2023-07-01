@@ -10,6 +10,11 @@ DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 class Schedule(Graph):
     def __init__(self, datafile):
         super().__init__(datafile)
+        
+        self.headers = None
+        with open(datafile, 'r', encoding = 'utf8') as rfile:
+            reader = csv.reader(rfile)
+            self.headers = next(reader)
 
     def init_from_data(self, nodes: list[Course], edges: list[tuple[Course, Course]]):
         self.nodes = nodes
@@ -23,10 +28,12 @@ class Schedule(Graph):
     
     # Real shit
 
-    def write_schedule_to_file(self, filename, PEOPLE, randomize = False):
+    def write_schedule_to_file(self, filename, randomize = False):
+
         file_obj = open(filename, 'w', encoding = 'utf8')
         writer = csv.writer(file_obj)
-        writer.writerow(['Day', 'Period'] + PEOPLE)
+
+        writer.writerow(['Day', 'Period'] + self.headers[1:])
 
         period_count = 0
         timetable = Graph.color_nodes(self)
@@ -37,7 +44,7 @@ class Schedule(Graph):
             period_number = (period_count % 6) + 1
             class_choices = []
 
-            for person in PEOPLE: 
+            for person in self.headers[1:]: 
                 class_taken = list(set(self.people_dict[person]) & set(period))
                 assert len(class_taken) <= 1
                 
@@ -83,13 +90,12 @@ class Schedule(Graph):
         console.print(table)
 
 if __name__ == '__main__':
-    PEOPLE = ['Kanon', 'Dayun', 'Hana', 'Ariya', 'Mei']
-
-    sched = Schedule(datafile = 'csv/pos_classes_at_hiro.csv')
+    sched = Schedule(datafile = 'csv/school/pos_classes.csv')
     nodes_dict = {node.name: node for node in sched.nodes}
 
     timetable = sched.color_nodes()
 
-    sched.write_schedule_to_file('csv/sched1.csv', PEOPLE, randomize = False)
+    sched.write_schedule_to_file('csv/school/sched1.csv', randomize = False)
     sched.pretty_print_schedule()
+    
     sched.individual_schedule(person_name = 'Ariya')
